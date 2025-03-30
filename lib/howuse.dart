@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-
-
 import 'package:flutter/material.dart';
 
 class NasilKullanilir extends StatelessWidget {
@@ -12,8 +10,9 @@ class NasilKullanilir extends StatelessWidget {
         foregroundColor:Colors.white,
         backgroundColor: Color(0xFFDC321E),
       ),
-      body: Padding(
-        padding: EdgeInsets.all(16.0),
+      body: Container(
+        color: Colors.white,
+        padding: EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -23,15 +22,21 @@ class NasilKullanilir extends StatelessWidget {
             ),
             SizedBox(height: 10),
             Text(
-              "1. İhbar oluşturabilmek için kayıt olup sayfanıza giriş yapmalısınız..\n"
-                  "2. İhbar haritasını ve listesini görmek için uygulamaya kayıt olmanıza gerek yoktur..\n"
+              "1. İhbar oluşturabilmek için kayıt olup sayfanıza giriş yapmalısınız.\n"
+                  "2. İhbar haritasını ve listesini görmek için uygulamaya kayıt olmanıza gerek yoktur.\n"
                   "3. Yetkiliyseniz, kurtarılan kişilerin konumlarını ve durumlarını güncelleyebilirsiniz.\n"
                   "4. Haritada kırmızı ile gösterilen konumlar onaylanmış ihbarları, yeşil ile gösterilen konumlar kurtarılan kişileri göstermektedir.\n"
                   "5. Güncellenen konumlar herkes tarafından görülebilir.",
               style: TextStyle(fontSize: 18),
             ),
 
+
             SizedBox(height: 30),
+            Image(
+              image: AssetImage('assets/usageInfo.png'),
+            ),
+
+            SizedBox(height: 50),
             Center(
               child: ElevatedButton(
                 onPressed: () {
@@ -39,7 +44,7 @@ class NasilKullanilir extends StatelessWidget {
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.red,
-                  padding: EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                  padding: EdgeInsets.symmetric(horizontal: 30, vertical: 12),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -47,9 +52,9 @@ class NasilKullanilir extends StatelessWidget {
                     Icon(Icons.arrow_back, color:Colors.white, size:30,),
                     SizedBox(width: 20),
                     Text(
-                      'Geri Dön',
+                      'Ana Sayfaya Dön',
                       style: TextStyle(
-                        color: Colors.white, fontSize: 22,
+                        color: Colors.white, fontSize: 18,
                       ),
                     ),
                   ],
