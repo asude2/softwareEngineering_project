@@ -4,6 +4,7 @@ import 'signup.dart';
 import 'map.dart';
 import 'howuse.dart';
 import 'list.dart';
+import 'menu.dart';
 
 void main() {
   runApp(MyApp());
@@ -51,14 +52,18 @@ class AnaSayfa extends StatelessWidget {
           ),
         ),
         actions: [
-          Padding(
-            padding: EdgeInsets.only(right: 25.0),
-            child: Icon(Icons.menu, color: Colors.white),
+          Builder(
+            builder: (context) => IconButton(
+              icon: Icon(Icons.menu, color: Colors.white),
+              onPressed: () {
+                Scaffold.of(context).openEndDrawer();
+              },
+            ),
           ),
         ],
       ),
+      endDrawer: MenuSayfasi(),
       body: Container(
-        //color: Color.fromRGBO(243, 243, 242, 1.0),
         color: Colors.white,
         child: Column(
           children: [
@@ -92,7 +97,6 @@ class AnaSayfa extends StatelessWidget {
                       style: TextStyle(color: Colors.white),
                     ),
                   ),
-
                   SizedBox(height: 20),
                   ElevatedButton(
                     onPressed: () {
@@ -111,7 +115,6 @@ class AnaSayfa extends StatelessWidget {
                       style: TextStyle(color: Colors.white),
                     ),
                   ),
-
                   SizedBox(height: 70),
                   ElevatedButton(
                     onPressed: () {
@@ -130,7 +133,6 @@ class AnaSayfa extends StatelessWidget {
                       style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                     ),
                   ),
-
                   SizedBox(height: 20),
                   ElevatedButton(
                     onPressed: () {
@@ -158,3 +160,7 @@ class AnaSayfa extends StatelessWidget {
     );
   }
 }
+
+
+
+
