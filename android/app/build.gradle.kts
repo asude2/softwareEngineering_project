@@ -6,9 +6,9 @@ plugins {
 }
 
 android {
+    ndkVersion = "29.0.13113456"
     namespace = "com.example.depsis_project"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11

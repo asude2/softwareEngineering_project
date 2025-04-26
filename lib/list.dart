@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 
 class ListeSayfasi extends StatelessWidget {
+  const ListeSayfasi({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(

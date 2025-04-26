@@ -11,6 +11,8 @@ void main() {
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -20,6 +22,8 @@ class MyApp extends StatelessWidget {
 }
 
 class AnaSayfa extends StatelessWidget {
+  const AnaSayfa({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -32,7 +36,7 @@ class AnaSayfa extends StatelessWidget {
               MaterialPageRoute(builder: (context) => NasilKullanilir()),
             );
           },
-          child: Container(
+          child: SizedBox(
             width: 160,
             child: Row(
               mainAxisSize: MainAxisSize.min,

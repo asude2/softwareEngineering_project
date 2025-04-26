@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 class KayitSayfasi extends StatefulWidget {
+  const KayitSayfasi({super.key});
+
   @override
   _KayitSayfasiState createState() => _KayitSayfasiState();
 }
@@ -163,14 +165,14 @@ class _KayitSayfasiState extends State<KayitSayfasi> {
 
             Center(
               child: ElevatedButton(
-                onPressed: kontrolEt, // Butona basınca kontrolEt() fonksiyonu çalışacak
-                child: Text(
-                  "Kayıt Ol",
-                  style: TextStyle(color: Colors.white, fontSize:16, fontWeight: FontWeight.bold,),
-                ),
+                onPressed: kontrolEt,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.red,
                   padding: EdgeInsets.symmetric(horizontal: 60, vertical: 15),
+                ), // Butona basınca kontrolEt() fonksiyonu çalışacak
+                child: Text(
+                  "Kayıt Ol",
+                  style: TextStyle(color: Colors.white, fontSize:16, fontWeight: FontWeight.bold,),
                 ),
               ),
             ),

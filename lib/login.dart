@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 class GirisSayfasi extends StatefulWidget {
+  const GirisSayfasi({super.key});
+
   @override
   _GirisSayfasiState createState() => _GirisSayfasiState();
 }
@@ -93,13 +95,13 @@ class _GirisSayfasiState extends State<GirisSayfasi> {
             Center(
               child: ElevatedButton(
                 onPressed: kontrolEt,
-                child: Text(
-                  "Giriş Yap",
-                  style: TextStyle(color: Colors.white, fontSize:20, fontWeight: FontWeight.bold,),
-                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.red,
                   padding: EdgeInsets.symmetric(horizontal: 80, vertical: 18),
+                ),
+                child: Text(
+                  "Giriş Yap",
+                  style: TextStyle(color: Colors.white, fontSize:20, fontWeight: FontWeight.bold,),
                 ),
               ),
 

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/material.dart';
 
 class NasilKullanilir extends StatelessWidget {
+  const NasilKullanilir({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
