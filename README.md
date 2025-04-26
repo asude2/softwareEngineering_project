@@ -4,13 +4,14 @@ DEPSIS, bir deprem anında enkaz altında kalan kişilerin konumlarının bildir
 Uygulama Flutter ile geliştirilmiştir.
 
 Özellikler:
--Kullanıcılar enkaz altındaki kişileri bildirebilir
 
--Yetkililer bildirilen kişileri harita üzerinde görebilir
+-Kullanıcılar enkaz altındaki kişileri bildirebilir.
 
--Kurtarılan kişiler yetkililer tarafından işaretlenebilir
+-Yetkililer bildirilen kişileri harita üzerinde görebilir.
 
--Harita üzerindeki konumlar anlık olarak güncellenir
+-Kurtarılan kişiler yetkililer tarafından işaretlenebilir.
+
+-Harita üzerindeki konumlar anlık olarak güncellenebilir.
 
 
 
