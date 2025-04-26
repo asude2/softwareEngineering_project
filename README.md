@@ -1,16 +1,18 @@
 # depsis_project
 
-A new Flutter project.
+DEPSIS, bir deprem anında enkaz altında kalan kişilerin konumlarının bildirilmesine ve yetkililerin bu konumları harita üzerinden takip etmesine yardımcı olan bir mobil uygulamadır.
+Uygulama Flutter ile geliştirilmiştir.
 
-## Getting Started
+Özellikler:
 
-This project is a starting point for a Flutter application.
+-Kullanıcılar enkaz altındaki kişileri bildirebilir.
 
-A few resources to get you started if this is your first Flutter project:
+-Yetkililer bildirilen kişileri harita üzerinde görebilir.
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+-Kurtarılan kişiler yetkililer tarafından işaretlenebilir.
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+-Harita üzerindeki konumlar anlık olarak güncellenebilir.
+
+
+
+
