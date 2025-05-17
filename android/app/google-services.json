@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "738256828606",
+    "project_id": "depsis-project-ffbe2",
+    "storage_bucket": "depsis-project-ffbe2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:738256828606:android:3201643c4ec00658e846ef",
+        "android_client_info": {
+          "package_name": "com.example.depsis_project"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAFmVMGOzB6Tp41xz8uwjwwmSTjdkijo-g"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:738256828606:android:670260f2870bab16e846ef",
+        "android_client_info": {
+          "package_name": "com.example.geminicode"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAFmVMGOzB6Tp41xz8uwjwwmSTjdkijo-g"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

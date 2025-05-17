@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart'; // FirebaseAuth'ı import edin
+// Giriş başarılı olduktan sonra yönlendirilecek sayfanızı import edin, örneğin HaritaSayfasi
+import 'map.dart'; // Veya hangi sayfaya gitmesini istiyorsanız
 
 class GirisSayfasi extends StatefulWidget {
   const GirisSayfasi({super.key});
@@ -11,7 +14,7 @@ class _GirisSayfasiState extends State<GirisSayfasi> {
   final TextEditingController gmailController = TextEditingController();
   final TextEditingController sifreController = TextEditingController();
 
-
+  String genelHataMesaji = "";
   String gmailHataMesaji = "";
   String sifreHataMesaji = "";
 
@@ -19,36 +22,74 @@ class _GirisSayfasiState extends State<GirisSayfasi> {
     return RegExp(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$").hasMatch(email);
   }
 
+  // Şifre için basit bir kontrol, Firebase daha detaylı kontrol edecektir.
   bool isValidSifre(String sifre) {
-    return RegExp(r'^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$').hasMatch(sifre);
+    return sifre.isNotEmpty && sifre.length >= 6;
   }
 
-  void kontrolEt() {
-    String gmail = gmailController.text;
-    String sifre = sifreController.text;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+
+  Future<void> firebaseGirisYap() async {
+    setState(() {
+      genelHataMesaji = "";
+    });
+    try {
+      UserCredential userCredential = await _auth.signInWithEmailAndPassword(
+        email: gmailController.text.trim(),
+        password: sifreController.text.trim(),
+      );
+      print("Kullanıcı giriş yaptı: ${userCredential.user?.uid}");
+
+      // Giriş başarılı, kullanıcıyı ana uygulama ekranına yönlendir
+      Navigator.pushReplacement( // Geri tuşuyla giriş sayfasına dönmemesi için
+        context,
+        MaterialPageRoute(builder: (context) => HaritaSayfasi()), // Ya da istediğiniz bir ana sayfa
+      );
+
+    } on FirebaseAuthException catch (e) {
+      setState(() {
+        if (e.code == 'user-not-found' || e.code == 'wrong-password' || e.code == 'invalid-credential') {
+          genelHataMesaji = 'E-posta veya şifre hatalı.';
+        } else if (e.code == 'invalid-email') {
+          gmailHataMesaji = 'Geçersiz e-posta formatı.';
+        }
+        else {
+          genelHataMesaji = 'Giriş sırasında bir hata oluştu: ${e.message}';
+        }
+        print('Firebase Giriş Hatası: ${e.code} - ${e.message}');
+      });
+    } catch (e) {
+      setState(() {
+        genelHataMesaji = 'Beklenmedik bir hata oluştu: $e';
+        print('Genel Giriş Hatası: $e');
+      });
+    }
+  }
+
+
+  void kontrolEtVeGirisYap() {
+    String gmail = gmailController.text.trim();
+    String sifre = sifreController.text.trim();
+    bool formGecerli = true;
 
     setState(() {
+      gmailHataMesaji = "";
+      sifreHataMesaji = "";
+      genelHataMesaji = "";
+
       if (!isValidEmail(gmail)) {
         gmailHataMesaji = "Geçerli bir e-posta adresi girin!";
-      } else {
-        gmailHataMesaji = "";
+        formGecerli = false;
       }
-
-      if (!isValidSifre(sifre)) {
-        sifreHataMesaji = "En az 6 haneli olmalıdır. En az bir harf ve bir rakamdan oluşmalıdır.";
-      } else {
-        sifreHataMesaji = "";
-      }
-
-      // Eğer her şey doğruysa, giriş bilgilerini konsola yazacağız
-      if (gmailHataMesaji.isEmpty && sifreHataMesaji.isEmpty) {
-        print("Gmail: $gmail");
-        print("Şifre: $sifre");
-
-        // Başka bir sayfaya yönlendirme işlemi burada yapılabilir
-
+      if (!isValidSifre(sifre)) { // Şifre için temel geçerlilik kontrolü
+        sifreHataMesaji = "Şifre en az 6 karakter olmalıdır.";
+        formGecerli = false;
       }
     });
+
+    if (formGecerli) {
+      firebaseGirisYap();
+    }
   }
 
   @override
@@ -61,7 +102,6 @@ class _GirisSayfasiState extends State<GirisSayfasi> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             SizedBox(height: 28),
-
             Text("Gmail:", style: TextStyle(fontSize: 20)),
             TextField(
               controller: gmailController,
@@ -75,12 +115,11 @@ class _GirisSayfasiState extends State<GirisSayfasi> {
                 errorText: gmailHataMesaji.isNotEmpty ? gmailHataMesaji : null,
               ),
             ),
-
             SizedBox(height: 20),
             Text("Şifre:", style: TextStyle(fontSize: 20)),
             TextField(
               controller: sifreController,
-              obscureText: true, // Şifreyi gizler
+              obscureText: true,
               decoration: InputDecoration(
                 hintText: "Şifrenizi girin",
                 hintStyle: TextStyle(fontSize:18),
@@ -89,12 +128,19 @@ class _GirisSayfasiState extends State<GirisSayfasi> {
                 errorText: sifreHataMesaji.isNotEmpty ? sifreHataMesaji : null,
               ),
             ),
-            SizedBox(height: 35),
-
-
+            SizedBox(height: 10),
+            if (genelHataMesaji.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                child: Text(
+                  genelHataMesaji,
+                  style: TextStyle(color: Colors.red, fontSize: 14),
+                ),
+              ),
+            SizedBox(height: 25),
             Center(
               child: ElevatedButton(
-                onPressed: kontrolEt,
+                onPressed: kontrolEtVeGirisYap,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.red,
                   padding: EdgeInsets.symmetric(horizontal: 80, vertical: 18),
@@ -104,7 +150,6 @@ class _GirisSayfasiState extends State<GirisSayfasi> {
                   style: TextStyle(color: Colors.white, fontSize:20, fontWeight: FontWeight.bold,),
                 ),
               ),
-
             ),
           ],
         ),
