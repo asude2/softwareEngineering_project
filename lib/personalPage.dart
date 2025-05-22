@@ -2,18 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class PersonalPage extends StatefulWidget {
-  const PersonalPage({super.key});
+class KisiselSayfa extends StatefulWidget {
+  const KisiselSayfa({super.key});
 
   @override
-  _PersonalPageState createState() => _PersonalPageState();
+  State<KisiselSayfa> createState() => _KisiselSayfaState();
 }
 
-class _PersonalPageState extends State<PersonalPage> {
-  final User? user = FirebaseAuth.instance.currentUser;
-
-  String adSoyad = "";
-  bool loading = true;
+class _KisiselSayfaState extends State<KisiselSayfa> {
+  String ad = '';
+  String soyad = '';
+  bool isLoading = true;
 
   @override
   void initState() {
@@ -22,81 +21,59 @@ class _PersonalPageState extends State<PersonalPage> {
   }
 
   Future<void> fetchUserData() async {
-    if (user == null) return;
+    final user = FirebaseAuth.instance.currentUser;
 
-    try {
-      final doc = await FirebaseFirestore.instance.collection('users').doc(user!.uid).get();
+    if (user != null) {
+      final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
       if (doc.exists) {
-        final data = doc.data();
-        String ad = data?['ad'] ?? "";
-        String soyad = data?['soyad'] ?? "";
         setState(() {
-          adSoyad = "$ad $soyad";
-          loading = false;
-        });
-      } else {
-        setState(() {
-          adSoyad = "Kullanıcı bilgisi bulunamadı";
-          loading = false;
+          ad = doc['ad'] ?? '';
+          soyad = doc['soyad'] ?? '';
+          isLoading = false;
         });
       }
-    } catch (e) {
-      setState(() {
-        adSoyad = "Bilgi alınamadı";
-        loading = false;
-      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    String email = user?.email ?? "Bilinmeyen";
-
     return Scaffold(
       appBar: AppBar(
-        title: Text("Kişisel Sayfa"),
+        title: Text('Kişisel Sayfa'),
         backgroundColor: Colors.red,
       ),
-      body: Center(
-        child: loading
-            ? CircularProgressIndicator()
-            : Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+      body: isLoading
+          ? Center(child: CircularProgressIndicator())
+          : Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(Icons.person, size: 100, color: Colors.grey),
-            SizedBox(height: 20),
             Text(
-              "Hoş geldin $adSoyad!",
-              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+              'Hoş Geldiniz,',
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.w500),
             ),
-            SizedBox(height: 10),
+            SizedBox(height: 5),
             Text(
-              "Giriş yapan kullanıcı: $email",
-              style: TextStyle(fontSize: 18),
+              '$ad $soyad',
+              style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: Colors.red),
             ),
-            SizedBox(height: 40),
-            ElevatedButton(
-              onPressed: () {
-                print("İhbar oluştur butonuna tıklandı!");
-                // Yeni sayfaya geçiş buraya
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.orange,
-                padding: EdgeInsets.symmetric(horizontal: 40, vertical: 16),
+            SizedBox(height: 30),
+            Center(
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.pushNamed(context, '/ihbarOlustur');
+                },
+                icon: Icon(Icons.report_problem_outlined),
+                label: Text(
+                  'İhbar Oluştur',
+                  style: TextStyle(fontSize: 20),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  padding: EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                ),
               ),
-              child: Text("İhbar Oluştur", style: TextStyle(fontSize: 18, color: Colors.white)),
-            ),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () async {
-                await FirebaseAuth.instance.signOut();
-                Navigator.pop(context);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-                padding: EdgeInsets.symmetric(horizontal: 40, vertical: 16),
-              ),
-              child: Text("Çıkış Yap", style: TextStyle(fontSize: 18, color: Colors.white)),
             ),
           ],
         ),
