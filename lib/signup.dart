@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart'; // FirebaseAuth'ı import edin
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class KayitSayfasi extends StatefulWidget {
   const KayitSayfasi({super.key});
@@ -38,7 +39,6 @@ class _KayitSayfasiState extends State<KayitSayfasi> {
     return RegExp(r'^\d{11}$').hasMatch(numara);
   }
 
-  // FirebaseAuth örneğini alalım
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
   Future<void> firebaseKayitOl() async {
@@ -50,14 +50,15 @@ class _KayitSayfasiState extends State<KayitSayfasi> {
         email: gmailController.text.trim(),
         password: sifreController.text.trim(),
       );
+      await FirebaseFirestore.instance.collection('users').doc(userCredential.user?.uid).set({
+        'ad': adController.text.trim(),
+        'soyad': soyadController.text.trim(),
+        'numara': numaraController.text.trim(),
+        'tcKimlik': tcController.text.trim(),
+        'email': gmailController.text.trim(),
+        'kayitTarihi': DateTime.now(), // Kayıt tarihini de ekleyelim
+      });
 
-      // Kullanıcı başarıyla oluşturuldu.
-      // İsterseniz burada kullanıcı bilgilerini Firestore'a kaydedebilirsiniz.
-      print("Kullanıcı oluşturuldu: ${userCredential.user?.uid}");
-      print("Ad: ${adController.text}");
-      print("Soyad: ${soyadController.text}");
-      print("Numara: ${numaraController.text}");
-      print("TC Kimlik: ${tcController.text}");
 
       // Kayıt başarılı olduktan sonra kullanıcıyı başka bir sayfaya yönlendirebilirsiniz
       // Örneğin ana sayfaya veya giriş yapılmış bir profil sayfasına

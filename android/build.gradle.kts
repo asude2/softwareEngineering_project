@@ -4,7 +4,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath("com.android.tools.build:gradle:7.0.4") // Burada çift tırnak ve parantez zorunlu
+        classpath("com.android.tools.build:gradle:8.4.2") // Burada çift tırnak ve parantez zorunlu
         classpath("com.google.gms:google-services:4.3.15") // Aynı şekilde
 
     }
