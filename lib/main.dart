@@ -127,7 +127,7 @@ class AnaSayfa extends StatelessWidget {
                         onPressed: () {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (context) => ListeSayfasi()),
+                            MaterialPageRoute(builder: (context) => IhbarListesi()),
                           );
                         },
                         style: ElevatedButton.styleFrom(

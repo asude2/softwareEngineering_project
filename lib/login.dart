@@ -1,7 +1,6 @@
+import 'package:depsis_project/personalPage.dart';
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart'; // FirebaseAuth'ı import edin
-// Giriş başarılı olduktan sonra yönlendirilecek sayfanızı import edin, örneğin HaritaSayfasi
-import 'map.dart'; // Veya hangi sayfaya gitmesini istiyorsanız
+import 'package:firebase_auth/firebase_auth.dart';
 
 class GirisSayfasi extends StatefulWidget {
   const GirisSayfasi({super.key});
@@ -43,7 +42,7 @@ class _GirisSayfasiState extends State<GirisSayfasi> {
       // Giriş başarılı, kullanıcıyı ana uygulama ekranına yönlendir
       Navigator.pushReplacement( // Geri tuşuyla giriş sayfasına dönmemesi için
         context,
-        MaterialPageRoute(builder: (context) => HaritaSayfasi()), // Ya da istediğiniz bir ana sayfa
+        MaterialPageRoute(builder: (context) => KisiselSayfa()), // Ya da istediğiniz bir ana sayfa
       );
 
     } on FirebaseAuthException catch (e) {
