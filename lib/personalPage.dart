@@ -1,9 +1,11 @@
+import 'package:depsis_project/main.dart';
+import 'package:depsis_project/menu.dart';
+import 'package:depsis_project/profilePage.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'city_district_data.dart';
 import 'edit_not.dart';
-
 
 class KisiselSayfa extends StatefulWidget {
   const KisiselSayfa({super.key});
@@ -153,10 +155,62 @@ class _KisiselSayfaState extends State<KisiselSayfa> {
     return InputDecoration(labelText: label, border: OutlineInputBorder());
   }
 
+  void cikisYap() async {
+    await FirebaseAuth.instance.signOut();
+    Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Kişisel Sayfa'), backgroundColor: Colors.red),
+      appBar: AppBar(
+        title: Text('Kişisel Sayfa'),
+        backgroundColor: Colors.red,
+        leading: Builder(
+          builder: (context) => IconButton(
+            icon: Icon(Icons.menu), // 3 çizgi menü ikonu
+            onPressed: () => Scaffold.of(context).openDrawer(),
+          ),
+        ),
+      ),
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            DrawerHeader(
+              decoration: BoxDecoration(color: Colors.red),
+              child: Text(
+                '$ad $soyad',
+                style: TextStyle(color: Colors.white, fontSize: 24),
+              ),
+            ),
+            ListTile(
+              leading: Icon(Icons.person),
+              title: Text('Profil'),
+              onTap: () {
+                Navigator.pop(context); // Drawer kapansın
+                // Profil sayfasına yönlendir (örnek olarak EditNot sayfası)
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => ProfilePage()), // Profil sayfan varsa buraya yaz
+                );
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.logout),
+              title: Text('Çıkış Yap'),
+              onTap: () async {
+                await FirebaseAuth.instance.signOut();
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (context) => AnaSayfa()), // giriş/kayıt sayfanın adı
+                      (Route<dynamic> route) => false,
+                );
+              },
+            ),
+          ],
+        ),
+      ),
       body: isLoading
           ? Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
@@ -191,7 +245,6 @@ class _KisiselSayfaState extends State<KisiselSayfa> {
                     padding: EdgeInsets.symmetric(horizontal: 40, vertical: 15),
                   ),
                 ),
-
               ],
             ),
           ),
