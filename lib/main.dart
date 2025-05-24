@@ -9,7 +9,6 @@ import 'user_auth_service.dart';
 import 'login.dart';
 import 'signup.dart';
 import 'map.dart';
-import 'howuse.dart';
 import 'edit_not.dart';
 import 'ihbar_olusturma_sayfasi.dart';
 import 'menu.dart';
@@ -77,7 +76,6 @@ class MyApp extends StatelessWidget {
         '/map': (context) => const HaritaSayfasi(),
         '/ihbarlarim': (context) => const IhbarDuzenleSayfasi(),
         '/yeni-ihbar': (context) => const IhbarOlusturmaSayfasi(),
-        '/nasil-kullanilir': (context) => const NasilKullanilir(),
         AdminIhbarYonetimSayfasi.routeName: (context) => const AdminIhbarYonetimSayfasi(),
         GenelOnayliIhbarListesiSayfasi.routeName: (context) => const GenelOnayliIhbarListesiSayfasi(),
       },
