@@ -184,11 +184,7 @@ class _AddressSearchMapScreenState extends State<AddressSearchMapScreen> {
               padding: EdgeInsets.symmetric(vertical: 10.0),
               child: Center(child: CircularProgressIndicator()),
             ),
-          // if (_errorMessage != null && !_isLoading) // Hata mesajını burada da gösterebilirsiniz
-          //   Padding(
-          //     padding: const EdgeInsets.all(8.0),
-          //     child: Text(_errorMessage!, style: TextStyle(color: Colors.red, fontSize: 16)),
-          //   ),
+
           Expanded(
             child: FlutterMap(
               mapController: _mapController,
