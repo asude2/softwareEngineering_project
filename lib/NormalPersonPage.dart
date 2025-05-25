@@ -14,8 +14,18 @@ class NormalKullaniciAnaSayfasi extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Ana Sayfa'),
-        automaticallyImplyLeading: false, // Geri butonunu kaldırır, menü ile açılır
+        automaticallyImplyLeading: false,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.account_circle, color: Colors.white),
+            tooltip: 'Profil',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const ProfilePage()),
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.logout, color: Colors.white),
             tooltip: 'Çıkış Yap',
@@ -26,7 +36,9 @@ class NormalKullaniciAnaSayfasi extends StatelessWidget {
                   title: const Text('Çıkış Yap'),
                   content: const Text('Oturumu sonlandırmak istediğinizden emin misiniz?'),
                   actions: [
-                    TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Hayır')),
+                    TextButton(
+                        onPressed: () => Navigator.of(context).pop(false),
+                        child: const Text('Hayır')),
                     ElevatedButton(
                         style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).primaryColor),
                         onPressed: () => Navigator.of(context).pop(true),
