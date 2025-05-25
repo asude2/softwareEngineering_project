@@ -170,8 +170,8 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Profil Sayfası'),
-        backgroundColor: Colors.red,
+        title: const Text('Profil Sayfası'),
+        backgroundColor: Theme.of(context).primaryColor,
       ),
       body: yukleniyor
           ? Center(child: CircularProgressIndicator())
