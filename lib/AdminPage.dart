@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'user_auth_service.dart';
 import 'package:provider/provider.dart';
 import 'admin_ihbar_yonetim_sayfasi.dart';
+import 'profilePage.dart';
 
 
 // --- ADMIN ANA SAYFASI ---
@@ -17,6 +18,16 @@ class AdminAnaSayfasi extends StatelessWidget {
         title: const Text('Admin Paneli'),
         automaticallyImplyLeading: false,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.account_circle, color: Colors.white),
+            tooltip: 'Profil',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const ProfilePage()),
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.logout, color: Colors.white),
             tooltip: 'Çıkış Yap',
