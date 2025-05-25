@@ -85,6 +85,33 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  Future<String?> _yeniSifreAl(BuildContext context) async {
+    TextEditingController yeniSifreController = TextEditingController();
+
+    return showDialog<String>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text("Yeni Şifre"),
+          content: TextField(
+            controller: yeniSifreController,
+            obscureText: true,
+            decoration: InputDecoration(hintText: "Yeni şifre"),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, null),
+              child: Text("İptal"),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, yeniSifreController.text.trim()),
+              child: Text("Kaydet"),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
 
 
@@ -139,7 +166,32 @@ class _ProfilePageState extends State<ProfilePage> {
                       ),
                     );
 
-                  } else {
+                  }
+                  if (alan == "sifre") {
+                    // Eski şifreyi sor
+                    String? eskiSifre = await _sifreSorDialog(context);
+                    if (eskiSifre == null) return;
+
+                    // Yeni şifreyi al
+                    String? yeniSifre = await _yeniSifreAl(context);
+                    if (yeniSifre == null) return;
+
+                    // Re-authenticate
+                    AuthCredential credential = EmailAuthProvider.credential(
+                      email: _auth.currentUser!.email!,
+                      password: eskiSifre,
+                    );
+
+                    await _auth.currentUser!.reauthenticateWithCredential(credential);
+
+                    // Yeni şifreyi güncelle
+                    await _auth.currentUser!.updatePassword(yeniSifre);
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text("Şifre başarıyla güncellendi.")),
+                    );
+                  }
+                  else {
                     // Email değilse doğrudan firestore'da güncelle
                     await _firestore.collection("users").doc(_auth.currentUser!.uid).update({
                       alan: yeniDeger,
@@ -200,6 +252,7 @@ class _ProfilePageState extends State<ProfilePage> {
             bilgiKutusu("Telefon", kullaniciVerisi!['numara'], "numara"),
             bilgiKutusu("TC Kimlik No", kullaniciVerisi!['tcKimlik'], "tcKimlik"),
             bilgiKutusu("Email", kullaniciVerisi!['email'], "email"),
+            bilgiKutusu("Şifre", "********", "sifre"),
           ],
         ),
       ),
