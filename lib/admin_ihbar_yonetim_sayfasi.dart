@@ -9,39 +9,57 @@ class AdminIhbarYonetimSayfasi extends StatefulWidget {
   static const String routeName = '/admin-ihbar-yonetim';
 
   @override
-  State<AdminIhbarYonetimSayfasi> createState() => _AdminIhbarYonetimSayfasiState();
+  State<AdminIhbarYonetimSayfasi> createState() =>
+      _AdminIhbarYonetimSayfasiState();
 }
 
-class _AdminIhbarYonetimSayfasiState extends State<AdminIhbarYonetimSayfasi> {
-  String _filterOption = 'Tümü';
+class _AdminIhbarYonetimSayfasiState
+    extends State<AdminIhbarYonetimSayfasi> {
+  String _filterOption = 'Tümü'; // Varsayılan filtre
 
   Future<void> _deleteIhbar(String docId) async {
     try {
-      await FirebaseFirestore.instance.collection('ihbarlar').doc(docId).delete();
+      await FirebaseFirestore.instance
+          .collection('ihbarlar')
+          .doc(docId)
+          .delete();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('İhbar başarıyla silindi.')),
+          SnackBar(
+              content: const Text('İhbar başarıyla silindi.'),
+              backgroundColor: Colors.green.shade700),
         );
       }
     } catch (e) {
       debugPrint('İhbar silme hatası: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('İhbar silinirken hata oluştu: $e')),
+          SnackBar(
+              content: Text('İhbar silinirken hata oluştu: $e'),
+              backgroundColor: Theme.of(context).colorScheme.error),
         );
       }
     }
   }
 
-  Future<void> _confirmDelete(String docId) async {
+  Future<void> _confirmDelete(String docId, String ihbarAdi) async {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Silme Onayı'),
-        content: const Text('Bu ihbarı silmek istediğinize emin misiniz?'),
+        content: Text(
+            "'$ihbarAdi' adlı ihbarı kalıcı olarak silmek istediğinizden emin misiniz?"),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('İptal')),
-          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Sil')),
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('İptal')),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.error,
+                foregroundColor: Theme.of(context).colorScheme.onError),
+            child: const Text('Sil'),
+          ),
         ],
       ),
     );
@@ -51,15 +69,23 @@ class _AdminIhbarYonetimSayfasiState extends State<AdminIhbarYonetimSayfasi> {
     }
   }
 
-
-  // İhbar durumu güncelleme fonksiyonu
   Future<void> _updateIhbarStatus(
       String docId, {
         bool? onaylandiMi,
         bool? kurtarildiMi,
-        String? adminUid,
+        required String? adminUid,
       }) async {
-    if (!mounted) return;
+    if (!mounted || adminUid == null) {
+      if (adminUid == null) {
+        debugPrint("Admin UID null, güncelleme yapılamadı.");
+        if(mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: const Text('İşlem için admin UID bulunamadı.'), backgroundColor: Theme.of(context).colorScheme.error),
+          );
+        }
+      }
+      return;
+    }
 
     Map<String, dynamic> dataToUpdate = {};
     String successMessage = "İhbar durumu güncellendi.";
@@ -71,7 +97,7 @@ class _AdminIhbarYonetimSayfasiState extends State<AdminIhbarYonetimSayfasi> {
         dataToUpdate['onayTarihi'] = FieldValue.serverTimestamp();
         successMessage = "İhbar başarıyla onaylandı.";
       } else {
-        // Onay kaldırılırsa diğer ilgili alanları temizle
+        // Onay kaldırılırsa, hem onay bilgileri hem de kurtarılma bilgileri silinir/resetlenir.
         dataToUpdate.addAll({
           'onaylayanAdminUid': FieldValue.delete(),
           'onayTarihi': FieldValue.delete(),
@@ -79,15 +105,26 @@ class _AdminIhbarYonetimSayfasiState extends State<AdminIhbarYonetimSayfasi> {
           'kurtaranAdminUid': FieldValue.delete(),
           'kurtarilmaTarihi': FieldValue.delete(),
         });
-        successMessage = "İhbar onayı kaldırıldı.";
+        successMessage = "İhbar onayı kaldırıldı. İlgili tüm durumlar sıfırlandı.";
       }
     }
 
+    // kurtarildiMi durumu sadece onaylandiMi true ise anlamlıdır.
+    // Eğer sadece kurtarildiMi durumu değiştiriliyorsa ve onaylandiMi null ise,
+    // onaylandiMi'nin true olduğundan emin olmalıyız.
     if (kurtarildiMi != null) {
+      if (onaylandiMi == null) { // Sadece kurtarılma durumu değişiyor
+        dataToUpdate['onaylandiMi'] = true; // Kurtarılma varsa, onaylı olmalı
+      }
       dataToUpdate['kurtarildiMi'] = kurtarildiMi;
       if (kurtarildiMi) {
         dataToUpdate['kurtaranAdminUid'] = adminUid;
         dataToUpdate['kurtarilmaTarihi'] = FieldValue.serverTimestamp();
+        // Eğer onay bilgisi yoksa (örn. doğrudan kurtarıldı işaretlenirse) onu da ekle
+        if (dataToUpdate['onaylayanAdminUid'] == null && dataToUpdate['onayTarihi'] == null) {
+          dataToUpdate['onaylayanAdminUid'] = adminUid; // Onaylayan da aynı admin olsun
+          dataToUpdate['onayTarihi'] = FieldValue.serverTimestamp(); // Onay tarihi de kurtarılma ile aynı olsun
+        }
         successMessage = "İhbar 'Kurtarıldı' olarak işaretlendi.";
       } else {
         dataToUpdate.addAll({
@@ -98,33 +135,54 @@ class _AdminIhbarYonetimSayfasiState extends State<AdminIhbarYonetimSayfasi> {
       }
     }
 
+
     if (dataToUpdate.isEmpty) return;
 
     try {
-      await FirebaseFirestore.instance.collection('ihbarlar').doc(docId).update(dataToUpdate);
+      await FirebaseFirestore.instance
+          .collection('ihbarlar')
+          .doc(docId)
+          .update(dataToUpdate);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(successMessage)));
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(successMessage), backgroundColor: Colors.green.shade700));
       }
     } catch (e) {
       debugPrint("İhbar durum güncelleme hatası: $e");
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('İhbar durumu güncellenirken bir hata oluştu: $e')),
+          SnackBar(
+              content: Text('İhbar durumu güncellenirken bir hata oluştu: $e'),
+              backgroundColor: Theme.of(context).colorScheme.error),
         );
       }
     }
   }
 
   Query _getFilteredQuery() {
-    Query baseQuery = FirebaseFirestore.instance.collection('ihbarlar').orderBy('tarih', descending: true);
+    Query baseQuery = FirebaseFirestore.instance
+        .collection('ihbarlar')
+        .orderBy('tarih', descending: true);
+
+    // Firestore'da boolean alanlar için doğru sorgulama:
+    // `isEqualTo: false` null olanları getirmez. Alanın var olup false olması gerekir.
+    // `isEqualTo: null` da kullanılabilir ama alanın hiç olmaması durumunu da kapsamak için
+    // ihbar oluştururken bu alanlara varsayılan değer (örn: false) atanması en iyisidir.
 
     switch (_filterOption) {
       case 'Onay Bekleyen':
+      // En iyi pratik, ihbar oluştururken onaylandiMi: false olarak ayarlamaktır.
+      // Eğer alan hiç yoksa bu sorgu onu getirmez.
         return baseQuery.where('onaylandiMi', isEqualTo: false);
       case 'Onaylanmış (Kurtarılmadı)':
-        return baseQuery.where('onaylandiMi', isEqualTo: true).where('kurtarildiMi', isEqualTo: false);
+        return baseQuery
+            .where('onaylandiMi', isEqualTo: true)
+            .where('kurtarildiMi', isEqualTo: false); // kurtarildiMi'nin false olduğu varsayılır
       case 'Kurtarılmış':
-        return baseQuery.where('kurtarildiMi', isEqualTo: true);
+      // Kurtarılmışsa, onaylandiMi da true olmalıdır.
+        return baseQuery
+            .where('onaylandiMi', isEqualTo: true)
+            .where('kurtarildiMi', isEqualTo: true);
       case 'Tüm Onaylanmışlar':
         return baseQuery.where('onaylandiMi', isEqualTo: true);
       case 'Tümü':
@@ -133,15 +191,24 @@ class _AdminIhbarYonetimSayfasiState extends State<AdminIhbarYonetimSayfasi> {
     }
   }
 
+
   @override
   Widget build(BuildContext context) {
     final userAuthService = Provider.of<UserAuthService>(context, listen: false);
     final adminUid = userAuthService.currentUser?.uid;
+    final ThemeData theme = Theme.of(context);
+    final TextTheme textTheme = theme.textTheme;
+    final ColorScheme colorScheme = theme.colorScheme;
 
     if (adminUid == null || !userAuthService.isAdmin) {
       return Scaffold(
         appBar: AppBar(title: const Text('Yetkisiz Erişim')),
-        body: const Center(child: Text('Bu sayfayı görüntüleme yetkiniz yok.')),
+        body: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Text('Bu sayfayı görüntüleme yetkiniz bulunmamaktadır.',
+                  textAlign: TextAlign.center, style: textTheme.titleLarge),
+            )),
       );
     }
 
@@ -151,17 +218,23 @@ class _AdminIhbarYonetimSayfasiState extends State<AdminIhbarYonetimSayfasi> {
       appBar: AppBar(
         title: const Text('Admin - İhbar Yönetimi'),
         actions: [
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.filter_list),
-            tooltip: "Filtrele",
-            onSelected: (value) => setState(() => _filterOption = value),
-            itemBuilder: (context) => const [
-              PopupMenuItem(value: 'Tümü', child: Text('Tüm İhbarlar')),
-              PopupMenuItem(value: 'Onay Bekleyen', child: Text('Onay Bekleyenler')),
-              PopupMenuItem(value: 'Onaylanmış (Kurtarılmadı)', child: Text('Onaylı (Kurtarılmadı)')),
-              PopupMenuItem(value: 'Kurtarılmış', child: Text('Kurtarılmış Olanlar')),
-              PopupMenuItem(value: 'Tüm Onaylanmışlar', child: Text('Tüm Onaylanmışlar')),
-            ],
+          Tooltip(
+            message: "Filtrele: $_filterOption",
+            child: PopupMenuButton<String>(
+              icon: const Icon(Icons.filter_list), // Düzeltilmiş ikon
+              onSelected: (value) {
+                if (_filterOption != value) {
+                  setState(() => _filterOption = value);
+                }
+              },
+              itemBuilder: (context) => [
+                _buildFilterMenuItem('Tümü', context),
+                _buildFilterMenuItem('Onay Bekleyen', context),
+                _buildFilterMenuItem('Onaylanmış (Kurtarılmadı)', context),
+                _buildFilterMenuItem('Kurtarılmış', context),
+                _buildFilterMenuItem('Tüm Onaylanmışlar', context),
+              ],
+            ),
           ),
         ],
       ),
@@ -169,92 +242,152 @@ class _AdminIhbarYonetimSayfasiState extends State<AdminIhbarYonetimSayfasi> {
         stream: query.snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return Center(
+                child: CircularProgressIndicator(color: colorScheme.primary));
           }
 
           if (snapshot.hasError) {
-            return Center(child: Text('Hata: ${snapshot.error}'));
+            debugPrint("Admin İhbar Yönetimi - Stream Hatası: ${snapshot.error}");
+            return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Text(
+                      'İhbarlar yüklenirken bir hata oluştu.\nDetay: ${snapshot.error}',
+                      textAlign: TextAlign.center,
+                      style: textTheme.bodyLarge?.copyWith(color: colorScheme.error)),
+                ));
           }
 
           final docs = snapshot.data?.docs ?? [];
 
           if (docs.isEmpty) {
-            return Center(child: Text('Filtreye uygun ihbar bulunamadı: $_filterOption'));
+            return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Text(
+                      '$_filterOption filtresine uygun ihbar bulunamadı.',
+                      textAlign: TextAlign.center,
+                      style: textTheme.titleMedium
+                          ?.copyWith(color: Colors.grey.shade600)),
+                ));
           }
 
           return ListView.builder(
+            padding: const EdgeInsets.only(top: 8.0, bottom: 80.0), // Alt kısımda boşluk
             itemCount: docs.length,
             itemBuilder: (context, index) {
               final doc = docs[index];
               final data = doc.data() as Map<String, dynamic>;
 
-              final bool onaylandi = data['onaylandiMi'] ?? false;
-              final bool kurtarildi = data['kurtarildiMi'] ?? false;
+              final bool onaylandi = data['onaylandiMi'] as bool? ?? false;
+              final bool kurtarildi = data['kurtarildiMi'] as bool? ?? false;
+              final String ihbarAdi = data['ihbar_edilen_ad_soyad'] as String? ?? 'İsimsiz İhbar';
 
-              // Tarih formatlama
               String formattedDate = "Tarih yok";
               final tarih = data['tarih'];
               if (tarih is Timestamp) {
                 try {
-                  formattedDate = DateFormat('dd.MM.yy HH:mm', 'tr_TR').format(tarih.toDate());
-                } catch (_) {}
+                  formattedDate = DateFormat('dd MMM yyyy, HH:mm', 'tr_TR').format(tarih.toDate());
+                } catch (_) {
+                  formattedDate = "${tarih.toDate().day}.${tarih.toDate().month}.${tarih.toDate().year}";
+                }
               }
 
-              // Durum bilgileri
               String durumText;
               Color durumRenk;
               IconData durumIkon;
 
               if (kurtarildi) {
                 durumText = "Kurtarıldı";
-                durumRenk = Colors.green.shade700;
-                durumIkon = Icons.task_alt;
+                durumRenk = Colors.green.shade600;
+                durumIkon = Icons.task_alt_rounded;
               } else if (onaylandi) {
-                durumText = "Onaylandı (Kurtarılmayı Bekliyor)";
+                durumText = "Onaylandı (Yardım Bekliyor)";
                 durumRenk = Colors.blue.shade700;
-                durumIkon = Icons.check_circle_outline;
+                durumIkon = Icons.check_circle_outline_rounded;
               } else {
                 durumText = "Onay Bekliyor";
-                durumRenk = Colors.orange.shade800;
-                durumIkon = Icons.hourglass_empty_outlined;
+                durumRenk = Colors.orange.shade700;
+                durumIkon = Icons.hourglass_empty_rounded;
               }
 
               return Card(
-                margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                elevation: 2,
-                child: ListTile(
-                  leading: Icon(durumIkon, color: durumRenk, size: 30),
-                  title: Text(
-                    data['ihbar_edilen_ad_soyad'] ?? 'İsimsiz İhbar',
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Açıklama: ${data['aciklama'] ?? '-'}', maxLines: 1, overflow: TextOverflow.ellipsis),
-                      Text(
-                        'Adres: ${data['detayli_adres'] ?? '-'} (${data['ilce'] ?? ''}/${data['il'] ?? ''})',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      if (data['konum'] is GeoPoint)
-                        Text(
-                          'Konum: ${(data['konum'] as GeoPoint).latitude.toStringAsFixed(3)}, ${(data['konum'] as GeoPoint).longitude.toStringAsFixed(3)}',
+                margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                clipBehavior: Clip.antiAlias, // Köşelerin düzgün kesilmesi için
+                child: InkWell( // Tüm karta tıklanabilirlik (opsiyonel)
+                  onTap: () {
+                    // İhbar detaylarını gösteren bir diyalog açılabilir.
+                    // _showIhbarDetayDialog(context, data);
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 12, 0, 12), // Sağ padding'i 0 yaptık, PopupMenu için yer
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding( // İkon için padding
+                          padding: const EdgeInsets.only(top: 4.0, right: 12.0),
+                          child: Icon(durumIkon, color: durumRenk, size: 28),
                         ),
-                      Text('Tarih: $formattedDate'),
-                      Text('Durum: $durumText', style: TextStyle(fontWeight: FontWeight.bold, color: durumRenk)),
-                    ],
-                  ),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      _buildActionButtons(doc.id, onaylandi, kurtarildi, adminUid),
-                      IconButton(
-                        icon: const Icon(Icons.delete, color: Colors.redAccent),
-                        tooltip: 'İhbarı Sil',
-                        onPressed: () => _confirmDelete(doc.id),
-                      ),
-                    ],
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                ihbarAdi,
+                                style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Açıklama: ${data['aciklama'] as String? ?? '-'}',
+                                style: textTheme.bodySmall,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Adres: ${data['detayli_adres'] as String? ?? '-'} (${data['ilce'] as String? ?? ''} / ${data['il'] as String? ?? ''})',
+                                style: textTheme.bodySmall,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              if (data.containsKey('konum') && data['konum'] is GeoPoint)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 3.0),
+                                  child: Text(
+                                    'Konum: ${(data['konum'] as GeoPoint).latitude.toStringAsFixed(4)}, ${(data['konum'] as GeoPoint).longitude.toStringAsFixed(4)}',
+                                    style: textTheme.labelSmall?.copyWith(color: Colors.grey.shade600),
+                                  ),
+                                ),
+                              const SizedBox(height: 6),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    formattedDate,
+                                    style: textTheme.labelSmall?.copyWith(color: Colors.grey.shade600),
+                                  ),
+                                  Container(
+                                    margin: const EdgeInsets.only(right: 12), // Durum etiketine sağ boşluk
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                    decoration: BoxDecoration(
+                                      color: durumRenk.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Text(
+                                      durumText,
+                                      style: textTheme.labelSmall?.copyWith(color: durumRenk, fontWeight: FontWeight.bold),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                        _buildActionPopupMenu(doc.id, onaylandi, kurtarildi, adminUid, ihbarAdi),
+                      ],
+                    ),
                   ),
                 ),
               );
@@ -265,53 +398,67 @@ class _AdminIhbarYonetimSayfasiState extends State<AdminIhbarYonetimSayfasi> {
     );
   }
 
-  // İşlemler için butonlar
-  Widget _buildActionButtons(String docId, bool onaylandi, bool kurtarildi, String? adminUid) {
-    final buttonStyle = ElevatedButton.styleFrom(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      foregroundColor: Colors.white,
+  PopupMenuItem<String> _buildFilterMenuItem(String value, BuildContext context) {
+    // `const` kaldırıldı, çünkü _filterOption ve Theme.of(context) const değil.
+    return PopupMenuItem(
+      value: value,
+      child: Text(value, style: TextStyle(
+        fontWeight: _filterOption == value ? FontWeight.bold : FontWeight.normal,
+        color: _filterOption == value ? Theme.of(context).colorScheme.primary : Theme.of(context).textTheme.bodyLarge?.color,
+      )),
     );
+  }
+
+  Widget _buildActionPopupMenu(String docId, bool onaylandi, bool kurtarildi, String? adminUid, String ihbarAdi) {
+    // `const` kaldırıldı, çünkü içindeki widget'lar ve fonksiyon çağrıları const değil.
+    List<PopupMenuEntry<String>> menuItems = [];
 
     if (!onaylandi) {
-      return ElevatedButton(
-        onPressed: () => _updateIhbarStatus(docId, onaylandiMi: true, adminUid: adminUid),
-        style: buttonStyle.copyWith(backgroundColor: MaterialStateProperty.all(Colors.green)),
-        child: const Text('Onayla'),
-      );
-    } else if (onaylandi && !kurtarildi) {
-      return Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          ElevatedButton(
-            onPressed: () => _updateIhbarStatus(docId, kurtarildiMi: true, adminUid: adminUid),
-            style: buttonStyle.copyWith(backgroundColor: MaterialStateProperty.all(Colors.blueAccent)),
-            child: const Text('Kurtarıldı'),
-          ),
-          TextButton(
-            onPressed: () => _updateIhbarStatus(docId, onaylandiMi: false, adminUid: adminUid),
-            child: const Text('Onayı Kaldır', style: TextStyle(color: Colors.deepOrange, fontSize: 12)),
-          ),
-        ],
-      );
-    } else if (onaylandi && kurtarildi) {
-      return Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          TextButton(
-            onPressed: () => _updateIhbarStatus(docId, kurtarildiMi: false, adminUid: adminUid),
-            child: const Text('Kurtarıldı İptal', style: TextStyle(color: Colors.blueAccent, fontSize: 12)),
-          ),
-          TextButton(
-            onPressed: () => _updateIhbarStatus(docId, onaylandiMi: false, adminUid: adminUid),
-            child: const Text('Onayı Kaldır', style: TextStyle(color: Colors.deepOrange, fontSize: 12)),
-          ),
-        ],
-      );
+      menuItems.add(PopupMenuItem(value: 'onayla', child: Row(children: [Icon(Icons.check_circle_outline_rounded, color: Colors.green.shade700), const SizedBox(width: 8), const Text('Onayla')])));
+    } else { // Onaylandıysa
+      if (!kurtarildi) {
+        menuItems.add(PopupMenuItem(value: 'kurtarildi', child: Row(children: [Icon(Icons.verified_user_outlined, color: Colors.blue.shade700), const SizedBox(width: 8), const Text('Kurtarıldı İşaretle')])));
+        menuItems.add(const PopupMenuDivider());
+      } else { // Hem onaylı hem kurtarılmışsa
+        menuItems.add(PopupMenuItem(value: 'kurtarildi_iptal', child: Row(children: [Icon(Icons.cancel_outlined, color: Colors.blue.shade700), const SizedBox(width: 8), const Text('Kurtarıldı İptal')])));
+        menuItems.add(const PopupMenuDivider());
+      }
+      // Her iki onaylı durumda da "Onayı Kaldır" seçeneği sunulur.
+      // Eğer kurtarılmışsa, onayı kaldırmak kurtarılmayı da kaldırır.
+      menuItems.add(PopupMenuItem(value: 'onay_kaldir', child: Row(children: [Icon(Icons.remove_circle_outline_rounded, color: Colors.orange.shade700), const SizedBox(width: 8), const Text('Onayı Kaldır')])));
     }
 
-    // Herhangi bir koşul sağlanmazsa boş widget döner
-    return const SizedBox.shrink();
+    // Her durumda Sil seçeneği en altta
+    if (menuItems.isNotEmpty) { // Eğer başka işlem varsa ayırıcı ekle
+      menuItems.add(const PopupMenuDivider());
+    }
+    menuItems.add(PopupMenuItem(value: 'sil', child: Row(children: [Icon(Icons.delete_outline_rounded, color: Theme.of(context).colorScheme.error), const SizedBox(width: 8), const Text('Sil')])));
+
+
+    return PopupMenuButton<String>(
+      icon: Icon(Icons.more_vert_rounded, color: Theme.of(context).iconTheme.color?.withOpacity(0.7)),
+      tooltip: "İşlemler",
+      onSelected: (String value) async {
+        switch (value) {
+          case 'sil':
+            await _confirmDelete(docId, ihbarAdi);
+            break;
+          case 'onayla':
+            await _updateIhbarStatus(docId, onaylandiMi: true, adminUid: adminUid);
+            break;
+          case 'kurtarildi':
+            await _updateIhbarStatus(docId, kurtarildiMi: true, adminUid: adminUid);
+            break;
+          case 'onay_kaldir':
+          // _updateIhbarStatus içinde onay kaldırılınca kurtarılma durumu da false'a çekiliyor.
+            await _updateIhbarStatus(docId, onaylandiMi: false, adminUid: adminUid);
+            break;
+          case 'kurtarildi_iptal':
+            await _updateIhbarStatus(docId, kurtarildiMi: false, adminUid: adminUid);
+            break;
+        }
+      },
+      itemBuilder: (BuildContext context) => menuItems,
+    );
   }
 }
