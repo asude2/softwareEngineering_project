@@ -2,6 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+final List<String> avatarList = [
+  // Erkek
+  'https://cdn-icons-png.flaticon.com/512/4140/4140052.png',
+  'https://cdn-icons-png.flaticon.com/512/3800/3800457.png',
+  'https://cdn-icons-png.flaticon.com/512/4140/4140048.png',
+  // Kadın
+  'https://cdn-icons-png.flaticon.com/512/4140/4140047.png',
+  'https://cdn-icons-png.flaticon.com/512/4139/4139977.png',
+  'https://cdn-icons-png.flaticon.com/512/1593/1593179.png',
+];
+
+
+
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
 
@@ -31,7 +44,6 @@ class _ProfilePageState extends State<ProfilePage> {
         await _firestore.collection('users').doc(kullanici.uid).get();
 
         if (snapshot.exists) {
-          // Kullanıcı doğruladıysa maili firestore ile senkronla
           if (kullanici.emailVerified) {
             await _firestore.collection("users").doc(kullanici.uid).update({
               "email": kullanici.email,
@@ -42,11 +54,8 @@ class _ProfilePageState extends State<ProfilePage> {
             kullaniciVerisi = snapshot.data() as Map<String, dynamic>;
             yukleniyor = false;
           });
-        } else {
-          setState(() {
-            yukleniyor = false;
-          });
         }
+
       }
     } catch (e) {
       print("Veri çekme hatası: $e");
@@ -110,6 +119,54 @@ class _ProfilePageState extends State<ProfilePage> {
           ],
         );
       },
+    );
+  }
+
+  Future<void> _avatarSecDialog(BuildContext context) async {
+    final List<String> avatarList = [
+      'https://cdn-icons-png.flaticon.com/512/4140/4140052.png',
+      'https://cdn-icons-png.flaticon.com/512/3800/3800457.png',
+      'https://cdn-icons-png.flaticon.com/512/4140/4140048.png',
+      'https://cdn-icons-png.flaticon.com/512/4140/4140047.png',
+      'https://cdn-icons-png.flaticon.com/512/4139/4139977.png',
+      'https://cdn-icons-png.flaticon.com/512/1593/1593179.png',
+    ];
+
+    await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Avatar Seç"),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: GridView.builder(
+            shrinkWrap: true,
+            itemCount: avatarList.length,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 3,
+              crossAxisSpacing: 10,
+              mainAxisSpacing: 10,
+            ),
+            itemBuilder: (context, index) {
+              return GestureDetector(
+                onTap: () async {
+                  String selectedAvatar = avatarList[index];
+                  await _firestore.collection("users").doc(_auth.currentUser!.uid).update({
+                    "avatar": selectedAvatar,
+                  });
+                  setState(() {
+                    kullaniciVerisi!['avatar'] = selectedAvatar;
+                  });
+                  Navigator.pop(context);
+                },
+                child: CircleAvatar(
+                  backgroundImage: NetworkImage(avatarList[index]),
+                  radius: 30,
+                ),
+              );
+            },
+          ),
+        ),
+      ),
     );
   }
 
@@ -233,18 +290,26 @@ class _ProfilePageState extends State<ProfilePage> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            // Fotoğraf kutusu
-            Container(
-              height: 150,
-              width: 150,
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(75),
-              ),
-              child: Center(
-                child: Text("Fotoğraf", style: TextStyle(fontSize: 16)),
-              ),
+            // Avatar gösterimi
+            Column(
+              children: [
+                CircleAvatar(
+                  radius: 50,
+                  backgroundImage: kullaniciVerisi!['avatar'] != null
+                      ? NetworkImage(kullaniciVerisi!['avatar'])
+                      : null,
+                  child: kullaniciVerisi!['avatar'] == null
+                      ? const Icon(Icons.person, size: 50)
+                      : null,
+                ),
+                const SizedBox(height: 10),
+                ElevatedButton(
+                  onPressed: () => _avatarSecDialog(context),
+                  child: const Text("Avatar Seç"),
+                ),
+              ],
             ),
+
             SizedBox(height: 20),
 
             // Bilgi kutuları
