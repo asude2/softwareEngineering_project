@@ -3,11 +3,18 @@ import 'package:flutter_map/flutter_map.dart' as fm;
 import 'package:latlong2/latlong.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+// main.dart'taki tema renklerine veya Google Fonts'a erişmek için
+// import 'package:google_fonts/google_fonts.dart'; // Eğer diyalogda özel font isterseniz
 
 class HaritaSayfasi extends StatelessWidget {
   const HaritaSayfasi({super.key});
 
   void _showMarkerDetailsDialog(BuildContext context, Map<String, dynamic> data, String docId) {
+    // Tema renklerine ve text stillerine erişim
+    final ThemeData theme = Theme.of(context);
+    final TextTheme textTheme = theme.textTheme;
+    final ColorScheme colorScheme = theme.colorScheme;
+
     String aciklama = data['aciklama'] as String? ?? 'Açıklama yok';
     String ihbarEdilenAdSoyad = data['ihbar_edilen_ad_soyad'] as String? ?? 'Belirtilmemiş';
     String il = data['il'] as String? ?? 'Belirtilmemiş';
@@ -32,11 +39,19 @@ class HaritaSayfasi extends StatelessWidget {
 
     bool onaylandi = data.containsKey('onaylandiMi') ? data['onaylandiMi'] as bool : false;
     bool kurtarildi = data.containsKey('kurtarildiMi') ? data['kurtarildiMi'] as bool : false;
-    String durumMesaji = "Durum: Onay Bekliyor";
+
+    String durumMesaji;
+    Color durumRenk;
+
     if (kurtarildi) {
       durumMesaji = "Durum: Kurtarıldı";
+      durumRenk = Colors.green.shade700;
     } else if (onaylandi) {
-      durumMesaji = "Durum: Onaylandı (Kurtarılmayı Bekliyor)";
+      durumMesaji = "Durum: Onaylandı (Yardım Bekliyor)";
+      durumRenk = Colors.blue.shade700;
+    } else {
+      durumMesaji = "Durum: Onay Bekliyor"; // Bu sayfada normalde görünmez ama genel bir yapı
+      durumRenk = Colors.orange.shade700;
     }
 
 
@@ -44,27 +59,37 @@ class HaritaSayfasi extends StatelessWidget {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text(ihbarEdilenAdSoyad.isNotEmpty ? ihbarEdilenAdSoyad : "İhbar Detayı"),
+          // Tema'dan gelen AlertDialog stilini kullanır (main.dart'ta tanımladık)
+          title: Text(
+            ihbarEdilenAdSoyad.isNotEmpty ? ihbarEdilenAdSoyad : "İhbar Detayı",
+            style: textTheme.titleLarge?.copyWith(color: colorScheme.onSurface), // Temadan gelen stil
+          ),
           content: SingleChildScrollView(
             child: ListBody(
               children: <Widget>[
-                Text('Açıklama: $aciklama'),
-                const SizedBox(height: 8),
-                Text('İl: $il'),
-                Text('İlçe: $ilce'),
-                Text('Detaylı Adres: $detayliAdres'),
-                const SizedBox(height: 8),
-                Text('Koordinatlar: $konumStr'),
-                const SizedBox(height: 8),
-                Text('İhbar Tarihi: $formattedDate'),
-                const SizedBox(height: 8),
-                Text(durumMesaji, style: TextStyle(fontWeight: FontWeight.bold, color: kurtarildi ? Colors.green : (onaylandi ? Colors.blue : Colors.orange))),
+                _buildDetailRow(context, "Açıklama:", aciklama),
+                const SizedBox(height: 10),
+                _buildDetailRow(context, "İl:", il),
+                _buildDetailRow(context, "İlçe:", ilce),
+                _buildDetailRow(context, "Detaylı Adres:", detayliAdres),
+                const SizedBox(height: 10),
+                _buildDetailRow(context, "Koordinatlar:", konumStr),
+                const SizedBox(height: 10),
+                _buildDetailRow(context, "İhbar Tarihi:", formattedDate),
+                const SizedBox(height: 12),
+                Text(
+                  durumMesaji,
+                  style: textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: durumRenk,
+                  ),
+                ),
               ],
             ),
           ),
           actions: <Widget>[
             TextButton(
-              child: const Text('Kapat'),
+              child: const Text('Kapat'), // Temadan stil alır
               onPressed: () {
                 Navigator.of(context).pop();
               },
@@ -75,20 +100,38 @@ class HaritaSayfasi extends StatelessWidget {
     );
   }
 
+  // Diyalog içeriği için yardımcı widget
+  Widget _buildDetailRow(BuildContext context, String label, String value) {
+    final TextTheme textTheme = Theme.of(context).textTheme;
+    return RichText(
+      text: TextSpan(
+        style: textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+        children: <TextSpan>[
+          TextSpan(text: '$label ', style: const TextStyle(fontWeight: FontWeight.w600)),
+          TextSpan(text: value),
+        ],
+      ),
+    );
+  }
+
+
   @override
   Widget build(BuildContext context) {
     final Stream<QuerySnapshot> ihbarStream = FirebaseFirestore.instance
         .collection('ihbarlar')
-        .where('onaylandiMi', isEqualTo: true) // SADECE ONAYLANMIŞ İHBARLAR
-    // .orderBy('kurtarildiMi') // Önce kurtarılmayanları göstermek için (opsiyonel)
+        .where('onaylandiMi', isEqualTo: true)
         .orderBy('tarih', descending: true)
         .snapshots();
+
+    // Marker boyutları
+    const double markerWidth = 60.0; // Önceki 80.0'dı
+    const double markerHeight = 60.0; // Önceki 80.0'dı
+    const double markerIconSize = 35.0; // Önceki 50.0'dı
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Onaylanmış İhbar Haritası'),
-        backgroundColor: Theme.of(context).primaryColor,
-        foregroundColor: Colors.white,
+        // backgroundColor ve foregroundColor temadan gelecek (main.dart'ta ayarlandı)
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: ihbarStream,
@@ -96,11 +139,17 @@ class HaritaSayfasi extends StatelessWidget {
           if (snapshot.hasError) {
             print('Firestore Stream Hata (Harita): ${snapshot.error}');
             return Center(
-                child: Text(
-                    'İhbarlar yüklenirken bir hata oluştu: ${snapshot.error}'));
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Text(
+                    'İhbarlar yüklenirken bir hata oluştu.\nLütfen daha sonra tekrar deneyiniz.',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Theme.of(context).colorScheme.error),
+                  ),
+                ));
           }
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return Center(child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary));
           }
 
           List<fm.Marker> ihbarMarkerlari = [];
@@ -114,13 +163,24 @@ class HaritaSayfasi extends StatelessWidget {
               if (data.containsKey('konum') && data['konum'] != null && data['konum'] is GeoPoint) {
                 GeoPoint geoPoint = data['konum'] as GeoPoint;
 
-                Color markerColor = kurtarildi ? Colors.green.shade700 : Colors.redAccent;
-                IconData markerIcon = kurtarildi ? Icons.health_and_safety_outlined : Icons.location_on_sharp;
+                // Renk ve ikonları durumuna göre belirleyelim
+                Color markerRenk;
+                IconData markerIkonData;
+
+                if (kurtarildi) {
+                  markerRenk = Colors.green.shade600; // Daha canlı bir yeşil
+                  markerIkonData = Icons.check_circle_outline_rounded; // Kurtarıldı için farklı ikon
+                } else {
+                  // Onaylı ama henüz kurtarılmamış
+                  markerRenk = Theme.of(context).colorScheme.error; // Temadan hata/acil durum rengi (kırmızı tonu)
+                  markerIkonData = Icons.location_pin; // Standart konum pini (daha belirgin)
+                }
+
 
                 ihbarMarkerlari.add(
                   fm.Marker(
-                    width: 80.0,
-                    height: 80.0,
+                    width: markerWidth,   // Optimize edilmiş genişlik
+                    height: markerHeight,  // Optimize edilmiş yükseklik
                     point: LatLng(geoPoint.latitude, geoPoint.longitude),
                     child: GestureDetector(
                       onTap: () {
@@ -129,10 +189,11 @@ class HaritaSayfasi extends StatelessWidget {
                       },
                       child: Tooltip(
                         message: '${data['aciklama'] as String? ?? 'Detay için tıkla'}\nDurum: ${kurtarildi ? "Kurtarıldı" : "Yardım Bekliyor"}',
+                        preferBelow: false, // Tooltip'i marker'ın üstünde göster
                         child: Icon(
-                          markerIcon,
-                          color: markerColor,
-                          size: 50.0,
+                          markerIkonData,
+                          color: markerRenk,
+                          size: markerIconSize, // Optimize edilmiş ikon boyutu
                         ),
                       ),
                     ),
@@ -143,30 +204,38 @@ class HaritaSayfasi extends StatelessWidget {
                     'Uyarı (Harita): ${document.id} ID\'li onaylı ihbar için "konum" alanı eksik veya GeoPoint değil.');
               }
             }
-          } else {
-            print('Firestore (Harita): Gösterilecek onaylı ihbar bulunamadı veya veri boş.');
           }
-          print('Oluşturulan onaylı marker sayısı: ${ihbarMarkerlari.length}');
 
-          if (ihbarMarkerlari.isEmpty && (!snapshot.hasData || snapshot.data!.docs.isEmpty)) {
-            return const Center(child: Padding(
-              padding: EdgeInsets.all(16.0),
-              child: Text('Haritada gösterilecek onaylı ihbar bulunamadı.', textAlign: TextAlign.center, style: TextStyle(fontSize: 16, color: Colors.grey)),
-            ));
+          if (ihbarMarkerlari.isEmpty) { // Veri var ama marker oluşturulamadıysa veya hiç veri yoksa
+            return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Text(
+                    'Haritada gösterilecek onaylı ihbar bulunamadı.',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey.shade600),
+                  ),
+                ));
           }
 
           return fm.FlutterMap(
             options: fm.MapOptions(
-              initialCenter: const LatLng(38.9637, 35.2433),
-              initialZoom: 5.5,
+              initialCenter: const LatLng(39.15, 35.5), // Türkiye için biraz daha merkezi bir başlangıç
+              initialZoom: 5.8, // Biraz daha yakınlaştırılmış başlangıç zoom'u
+              minZoom: 3.0, // Minimum zoom seviyesi
+              maxZoom: 18.0, // Maksimum zoom seviyesi
             ),
             children: [
               fm.TileLayer(
-                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                userAgentPackageName: 'com.example.depsis_project', // Kendi paket adınız
+                urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', // Standart OpenStreetMap
+                subdomains: const ['a', 'b', 'c'], // OSM için standart alt alan adları
+                userAgentPackageName: 'com.example.depsis_project', // Kendi paket adınızla değiştirin
+                // Tile provider options:
+                // tileProvider: fm.NetworkTileProvider(), // Varsayılan
               ),
               fm.MarkerLayer(
                 markers: ihbarMarkerlari,
+                rotate: false, // Marker'lar harita ile dönmesin (genellikle istenmez)
               ),
             ],
           );
