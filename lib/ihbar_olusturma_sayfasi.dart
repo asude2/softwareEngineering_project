@@ -57,9 +57,28 @@ class _IhbarOlusturmaSayfasiState extends State<IhbarOlusturmaSayfasi> {
 
       _currentPosition = await Geolocator.getCurrentPosition(
           desiredAccuracy: LocationAccuracy.high);
+
+      // reverse geocoding
+      List<Placemark> placemarks = await placemarkFromCoordinates(
+        _currentPosition!.latitude,
+        _currentPosition!.longitude,
+      );
+
+      if (placemarks.isNotEmpty) {
+        Placemark place = placemarks.first;
+
+        setState(() {
+          _ilController.text = place.administrativeArea ?? ''; // İl
+          _ilceController.text = place.subAdministrativeArea ?? ''; // İlçe
+          // detaylı adres için mahalle, sokak veya benzeri bilgileri kullanabilirsin
+          _detayliAdresController.text =
+              '${place.street ?? ''} ${place.subLocality ?? ''}'.trim();
+        });
+      }
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('Mevcut GPS konumu başarıyla alındı!')));
+            content: Text('Mevcut GPS konumu başarıyla alındı ve adres dolduruldu!')));
       }
     } catch (e) {
       print("GPS Konum alma hatası: $e");
@@ -234,126 +253,126 @@ class _IhbarOlusturmaSayfasiState extends State<IhbarOlusturmaSayfasi> {
     // Kullanıcı giriş yapmamışsa, bu sayfaya erişimi engelleyebiliriz veya uyarı gösterebiliriz.
     // Ancak şu anki akışta AuthWrapper'dan sonra geliyorsa bu sorun olmaz.
     // Eğer /yeni-ihbar rotası giriş yapmadan da erişilebilirse, burada bir kontrol gerekebilir.
-     final user = FirebaseAuth.instance.currentUser;
-     if (user == null && ModalRoute.of(context)?.settings.name == '/yeni-ihbar') {
-    //   Örneğin, giriş sayfasına yönlendir
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          Navigator.pushReplacementNamed(context, '/login');
-        });
-        return Scaffold(body: Center(child: Text("Bu sayfayı görmek için giriş yapmalısınız.")));
-     }
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null && ModalRoute.of(context)?.settings.name == '/yeni-ihbar') {
+      //   Örneğin, giriş sayfasına yönlendir
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Navigator.pushReplacementNamed(context, '/login');
+      });
+      return Scaffold(body: Center(child: Text("Bu sayfayı görmek için giriş yapmalısınız.")));
+    }
 
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Yeni İhbar Oluştur'),
-        backgroundColor: const Color(0xFFDC321E),
-        foregroundColor: Colors.white,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: <Widget>[
-              _buildTextFormField(
-                controller: _adSoyadController,
-                labelText: 'İhbar Edilen Ad Soyad',
-                isRequired: true,
-                prefixIcon: Icons.person_outline,
-              ),
-              _buildTextFormField(
-                controller: _tcController,
-                labelText: 'TC Kimlik No',
-                hintText: 'Opsiyonel',
-                keyboardType: TextInputType.number,
-                prefixIcon: Icons.badge_outlined,
-              ),
-              _buildTextFormField(
-                controller: _telefonController,
-                labelText: 'Telefon Numarası',
-                hintText: 'Opsiyonel',
-                keyboardType: TextInputType.phone,
-                prefixIcon: Icons.phone_outlined,
-              ),
-              _buildTextFormField(
-                controller: _ilController,
-                labelText: 'İl',
-                isRequired: true,
-                prefixIcon: Icons.location_city_outlined,
-              ),
-              _buildTextFormField(
-                controller: _ilceController,
-                labelText: 'İlçe',
-                isRequired: true,
-                prefixIcon: Icons.holiday_village_outlined,
-              ),
-              _buildTextFormField(
-                controller: _detayliAdresController,
-                labelText: 'Detaylı Adres',
-                hintText: 'Mahalle, cadde, sokak, bina no vb.',
-                isRequired: true,
-                maxLines: 3,
-                prefixIcon: Icons.home_work_outlined,
-              ),
-              _buildTextFormField(
-                controller: _aciklamaController,
-                labelText: 'Kısa Açıklama (Harita için)',
-                hintText: 'Durum hakkında kısa bilgi',
-                isRequired: true,
-                maxLines: 2,
-                prefixIcon: Icons.info_outline,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Konum Belirleme:',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              const SizedBox(height: 8),
-              _isLoadingLocation
-                  ? const Center(child: CircularProgressIndicator())
-                  : ElevatedButton.icon(
-                icon: const Icon(Icons.my_location),
-                label: const Text('Mevcut GPS Konumumu Al'),
-                onPressed: _getCurrentLocationByGPS,
-                style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 12)),
-              ),
-              const SizedBox(height: 10),
-              _isGeocoding
-                  ? const Center(child: CircularProgressIndicator())
-                  : ElevatedButton.icon(
-                icon: const Icon(Icons.location_searching),
-                label: const Text('Girdiğim Adresten Konum Bul'),
-                onPressed: _getCoordinatesFromAddress,
-                style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 12)),
-              ),
-              if (_currentPosition != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 12.0),
-                  child: Text(
-                      'Seçilen Konum: Lat: ${_currentPosition!.latitude.toStringAsFixed(5)}, Lon: ${_currentPosition!.longitude.toStringAsFixed(5)}',
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                          color: Colors.green, fontWeight: FontWeight.bold)),
-                ),
-              const SizedBox(height: 24),
-              _isSaving
-                  ? const Center(child: CircularProgressIndicator())
-                  : ElevatedButton.icon(
-                icon: const Icon(Icons.send, color: Colors.white),
-                label: const Text('İhbarı Gönder', style: TextStyle(color: Colors.white, fontSize: 16)),
-                onPressed: _kaydetIhbar,
-                style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFDC321E),
-                    padding: const EdgeInsets.symmetric(vertical: 15)),
-              ),
-            ],
-          ),
+        appBar: AppBar(
+          title: const Text('Yeni İhbar Oluştur'),
+          backgroundColor: const Color(0xFFDC321E),
+          foregroundColor: Colors.white,
         ),
-      ),
+        body: SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  _buildTextFormField(
+                    controller: _adSoyadController,
+                    labelText: 'İhbar Edilen Ad Soyad',
+                    isRequired: true,
+                    prefixIcon: Icons.person_outline,
+                  ),
+                  _buildTextFormField(
+                    controller: _tcController,
+                    labelText: 'TC Kimlik No',
+                    hintText: 'Opsiyonel',
+                    keyboardType: TextInputType.number,
+                    prefixIcon: Icons.badge_outlined,
+                  ),
+                  _buildTextFormField(
+                    controller: _telefonController,
+                    labelText: 'Telefon Numarası',
+                    hintText: 'Opsiyonel',
+                    keyboardType: TextInputType.phone,
+                    prefixIcon: Icons.phone_outlined,
+                  ),
+                  _buildTextFormField(
+                    controller: _ilController,
+                    labelText: 'İl',
+                    isRequired: true,
+                    prefixIcon: Icons.location_city_outlined,
+                  ),
+                  _buildTextFormField(
+                    controller: _ilceController,
+                    labelText: 'İlçe',
+                    isRequired: true,
+                    prefixIcon: Icons.holiday_village_outlined,
+                  ),
+                  _buildTextFormField(
+                    controller: _detayliAdresController,
+                    labelText: 'Detaylı Adres',
+                    hintText: 'Mahalle, cadde, sokak, bina no vb.',
+                    isRequired: true,
+                    maxLines: 3,
+                    prefixIcon: Icons.home_work_outlined,
+                  ),
+                  _buildTextFormField(
+                    controller: _aciklamaController,
+                    labelText: 'Kısa Açıklama (Harita için)',
+                    hintText: 'Durum hakkında kısa bilgi',
+                    isRequired: true,
+                    maxLines: 2,
+                    prefixIcon: Icons.info_outline,
+                  ),
+                  const SizedBox(height: 1),
+                  Text(
+                    'Konum Belirleme:',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 8),
+                  _isLoadingLocation
+                      ? const Center(child: CircularProgressIndicator())
+                      : ElevatedButton.icon(
+                    icon: const Icon(Icons.my_location),
+                    label: const Text('Mevcut GPS Konumumu Al'),
+                    onPressed: _getCurrentLocationByGPS,
+                    style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12)),
+                  ),
+                  const SizedBox(height: 1),
+                  _isGeocoding
+                      ? const Center(child: CircularProgressIndicator())
+                      : ElevatedButton.icon(
+                    icon: const Icon(Icons.location_searching),
+                    label: const Text('Girdiğim Adresten Konum Bul'),
+                    onPressed: _getCoordinatesFromAddress,
+                    style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12)),
+                  ),
+                  if (_currentPosition != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 12.0),
+                      child: Text(
+                          'Seçilen Konum: Lat: ${_currentPosition!.latitude.toStringAsFixed(5)}, Lon: ${_currentPosition!.longitude.toStringAsFixed(5)}',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                              color: Colors.green, fontWeight: FontWeight.bold)),
+                    ),
+                  const SizedBox(height:5),
+                  _isSaving
+                      ? const Center(child: CircularProgressIndicator())
+                      : ElevatedButton.icon(
+                    icon: const Icon(Icons.send, color: Colors.white),
+                    label: const Text('İhbarı Gönder', style: TextStyle(color: Colors.white, fontSize: 16)),
+                    onPressed: _kaydetIhbar,
+                    style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFDC321E),
+                        padding: const EdgeInsets.symmetric(vertical: 15)),
+                  ),
+                ],
+              ),
+            ),
+            ),
     );
-  }
+    }
 }
