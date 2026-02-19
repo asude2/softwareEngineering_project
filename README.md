@@ -34,9 +34,12 @@ flutter pub get
 Uygulamayı çalıştırın:
 flutter run
 
+
+
 <p align="center">
   <img src="https://github.com/user-attachments/assets/12214311-c2cd-485f-bea5-a18285a26dd2" width="30%" />
   <img src="https://github.com/user-attachments/assets/a74c550d-8031-4a4f-bf8d-880b3205e26f" width="30%" /> 
   <img src="https://github.com/user-attachments/assets/e13b9e3d-6b8a-45ec-979d-5eca595693b9" width="30%" />
+  <img src="https://github.com/user-attachments/assets/ec1d919e-97e0-4ad6-a17d-52942becc839" width="30%" />
 </p>
 
