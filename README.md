@@ -34,5 +34,9 @@ flutter pub get
 Uygulamayı çalıştırın:
 flutter run
 
-<img width="298" height="629" alt="Ekran görüntüsü 2026-02-19 234346" src="https://github.com/user-attachments/assets/12214311-c2cd-485f-bea5-a18285a26dd2" />
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/12214311-c2cd-485f-bea5-a18285a26dd2" width="30%" />
+  <img src="https://github.com/user-attachments/assets/a74c550d-8031-4a4f-bf8d-880b3205e26f" width="30%" /> 
+  <img src="Ekran görüntüsü 2026-02-19 234420" src="https://github.com/user-attachments/assets/72d5d610-dda1-441e-8b32-0a736ba1572a" width="30%" />
+</p>
 
